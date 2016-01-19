@@ -1,0 +1,4 @@
+#define DEBUG true;
+
+#define SSSID "STATION-SSID";
+#define PASSWORD "PASSWORD";

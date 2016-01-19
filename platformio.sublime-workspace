@@ -1,0 +1,232 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"de",
+				"DEBUG"
+			],
+			[
+				"print",
+				"print"
+			],
+			[
+				"win",
+				"windSpeed"
+			],
+			[
+				"check",
+				"checksum"
+			],
+			[
+				"prin",
+				"println"
+			],
+			[
+				"p",
+				"pressure"
+			],
+			[
+				"out",
+				"output"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "src/main.cpp",
+			"settings":
+			{
+				"buffer_size": 8150,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"",
+				"Set Syntax: C"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 139.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/john/Dropbox/Projects/ArduinoWeatherStationReceiver/platformio.ini",
+		"/home/john/Dropbox/Projects/ArduinoWeatherStation/platformio.ini",
+		"/home/john/Dropbox/Projects/sublimeTest/main.cpp",
+		"/home/john/.config/sublime-text-2/Packages/User/Stino/Preferences.stino-settings",
+		"/home/john/Projects/bug-free-bassoon/despatchbay/despatchbay/shipping.wsdl",
+		"/home/john/Projects/bug-free-bassoon/despatchbay/Tracking/tracking.wsdl",
+		"/home/john/Projects/bug-free-bassoon/despatchbay/Addressing/addressing.wsdl",
+		"/home/john/Dropbox/Projects/ArduinoWeatherStation/src/main.cpp",
+		"/home/john/Applications/Sublime Text 2/install.sh",
+		"/home/john/Dropbox/Projects/Data-Packet/main.cpp",
+		"/home/john/Dropbox/Projects/ArduinoWeatherStation/RS232",
+		"/home/john/.config/sublime-text-2/Packages/User/Default (Linux).sublime-keymap",
+		"/usr/share/arduino/examples/01.Basics/Blink/Blink.ino",
+		"/home/john/.config/sublime-text-2/Packages/User/PlatformIO.sublime-build"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"solar",
+			"bool",
+			">",
+			"arduino"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"sublime"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "src/main.cpp",
+					"settings":
+					{
+						"buffer_size": 8150,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								447,
+								447
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 113.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 212.0
+	},
+	"output.upload|/home/john/Dropbox/Projects/ArduinoWeatherStation/src|1447351634.83":
+	{
+		"height": 112.0
+	},
+	"output.upload|/usr/share/arduino/examples/01.Basics/Blink|1447269219.6":
+	{
+		"height": 112.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 168.0,
+	"status_bar_visible": true
+}

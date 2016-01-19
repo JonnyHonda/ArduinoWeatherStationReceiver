@@ -33,3 +33,6 @@
 lib/
 platformio.sublime-project
 .DS_Store
+
+# Config files
+configuration.h
