@@ -326,7 +326,7 @@ String getClientOutput() {
   s += "<br />\r\n";
 
   s += "Light Value: \r\n";
-  s += rainTipperCounter;
+  s += lightValue;
   s += "<br />\r\n";
 
   s += "Last Update: \r\n";
