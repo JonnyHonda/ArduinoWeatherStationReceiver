@@ -89,18 +89,18 @@ void setup()
 #endif
   WiFi.begin(SSSID, PASSWORD);
 
-  while (WiFi.status() != WL_CONNECTED) {
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, HIGH);
+while (WiFi.status() != WL_CONNECTED) {
     delay(500);
 #ifdef DEBUG
     Serial.print(".");
 #endif
-    digitalWrite(RED_LED, LOW);
-    digitalWrite(GREEN_LED, LOW);
-  }
+}
+     digitalWrite(RED_LED, LOW);
+    digitalWrite(GREEN_LED, LOW); 
 #ifdef DEBUG
-  Serial.println("");
+  Serial.println();
   Serial.println("WiFi connected");
 #endif
 
@@ -178,7 +178,6 @@ void loop()
         Serial.println(pressure);
 #endif
 
-
         // Wind Ordinal
         windDir = my_packet.data[4];
 #ifdef DEBUG
@@ -200,7 +199,6 @@ void loop()
         Serial.print("Wind Speed = ");
         Serial.println(windSpeed);
 #endif
-
 
         // Rain tipper counter
         rainTipperCounter = my_packet.data[6];
