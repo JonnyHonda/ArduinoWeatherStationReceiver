@@ -30,7 +30,7 @@
 #platformIO
 .pioenvs/
 .sconsign.dblite
-lib/
+#lib/
 platformio.sublime-project
 .DS_Store
 

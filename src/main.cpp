@@ -12,7 +12,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>   
 #include <SoftwareSerial.h> 
-#include <DS1302.h>
+#include "DS1302.h"
 #include "EpochTime.h"
 
 // Init the DS1302
