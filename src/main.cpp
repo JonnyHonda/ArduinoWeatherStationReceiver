@@ -97,7 +97,7 @@ while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
 #endif
 }
-     digitalWrite(RED_LED, LOW);
+    digitalWrite(RED_LED, LOW);
     digitalWrite(GREEN_LED, LOW); 
 #ifdef DEBUG
   Serial.println();
@@ -184,6 +184,7 @@ void loop()
         Serial.print("Wind Dir: = ");
         Serial.println(windDir);
 #endif
+
         // Humidity
         humidity = my_packet.data[5];
 #ifdef DEBUG
@@ -222,6 +223,7 @@ void loop()
 
       bufferindex = 0;
       digitalWrite(GREEN_LED, LOW);
+
 #ifdef DEBUG
       Serial.println();
 #endif
@@ -256,7 +258,9 @@ void loop()
         // Match the request
         if (req.indexOf("/csv") != -1) {
           s = getcsvOutput();
-        } else {
+        } else (req.indexOf("/settime") != -1) {
+          //TODO: Put Set Time code here
+        }else{
           s = getClientOutput();
         }
         client.print(s);
