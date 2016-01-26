@@ -2,3 +2,19 @@
 
 #define SSSID "STATION-SSID";
 #define PASSWORD "PASSWORD";
+
+#define CEpin 2			//-> Arduino Digital 2 purple
+#define IOpin 13		//-> Arduino Digital 13 gray
+#define SCLKpin 15    	//  -> Arduino Digital 15 white
+
+#define SSRX 14			// Software Serial RX Pin
+#define SSTX 12			// Software Serial TX Pin
+
+#define GREEN_LED 5		// Pin for greed led indicator
+#define RED_LED 4		// Pin for red led indicator
+
+#define WEB_PORT 80		// Internet port
+
+#define HEADER_SIZE 3	
+#define DATA_SIZE 14
+#define CHECKSUM_SIZE 2

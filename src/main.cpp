@@ -20,9 +20,6 @@ String getcsvOutput(void);
 
 SoftwareSerial mySerial(SSRX, SSTX); // RX, TX
 
-const char* ssid = SSSID;
-const char* password = PASSWORD;
-
 double temperature = 0.00;
 double pressure = 0.00;
 int windDir = 0;
@@ -88,9 +85,9 @@ void setup()
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(SSSID);
 #endif
-  WiFi.begin(ssid, password);
+  WiFi.begin(SSSID, PASSWORD);
 
   while (WiFi.status() != WL_CONNECTED) {
     digitalWrite(RED_LED, HIGH);
