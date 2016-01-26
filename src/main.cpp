@@ -17,6 +17,7 @@ Time t;
 
 String getClientOutput(void);
 String getcsvOutput(void);
+void setTime(String);
 
 SoftwareSerial mySerial(SSRX, SSTX); // RX, TX
 
@@ -260,6 +261,7 @@ void loop()
           s = getcsvOutput();
         } else if(req.indexOf("/settime") != -1) {
           //TODO: Put Set Time code here
+          setTime(req);
         }else{
           s = getClientOutput();
         }
@@ -347,4 +349,28 @@ String getClientOutput() {
   return s;
 }
 
+void setTime(String uri){
+    int index = uri.lastIndexOf('=');
+  int l = uri.length();
+  String date = uri.substring(index + 1, l - 1);
+  
+  // extract the various elements from date 
+  // zero being the first element
+  // 2016-01-26T23:59:00
+  int year = date.substring(0, 4).toInt();
+  int month = date.substring(5, 2).toInt();
+  int day = date.substring(8, 2).toInt();
+  int hour = date.substring(11, 2).toInt();
+  int min = date.substring(14, 2).toInt();
+  int sec = date.substring(17, 2).toInt();
 
+  rtc.halt(false);
+  rtc.writeProtect(false);
+
+    // The following lines can be commented out to use the values already stored in the DS1302
+  //rtc.setDOW(FRIDAY);        // Set Day-of-Week to FRIDAY
+  rtc.setTime(hour, min, sec);     // Set the time to 12:00:00 (24hr format)
+  rtc.setDate(day, month, year);   // Set the date to August 6th, 2010
+
+  rtc.writeProtect(false);
+}
