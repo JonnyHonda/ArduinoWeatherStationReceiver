@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"seril",
+				"Serial"
+			],
+			[
+				"pa",
+				"packet_structure"
+			],
+			[
 				"de",
 				"DEBUG"
 			],
@@ -39,7 +47,7 @@
 			"file": "src/main.cpp",
 			"settings":
 			{
-				"buffer_size": 8150,
+				"buffer_size": 8142,
 				"line_ending": "Unix"
 			}
 		}
@@ -47,9 +55,13 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 392.0,
+		"height": 369.0,
 		"selected_items":
 		[
+			[
+				"style",
+				"SublimeAStyleFormatter: Format Current File"
+			],
 			[
 				"",
 				"Set Syntax: C"
@@ -72,6 +84,7 @@
 	},
 	"file_history":
 	[
+		"/home/john/Dropbox/Projects/ArduinoWeatherStationReceiver/src/main.cpp",
 		"/home/john/Dropbox/Projects/ArduinoWeatherStationReceiver/platformio.ini",
 		"/home/john/Dropbox/Projects/ArduinoWeatherStation/platformio.ini",
 		"/home/john/Dropbox/Projects/sublimeTest/main.cpp",
@@ -103,6 +116,10 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"packet.",
+			"my_packet",
+			"stream_data.",
+			"my_packet.",
 			"solar",
 			"bool",
 			">",
@@ -125,7 +142,6 @@
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
 				{
@@ -133,15 +149,15 @@
 					"file": "src/main.cpp",
 					"settings":
 					{
-						"buffer_size": 8150,
+						"buffer_size": 8142,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								447,
-								447
+								6434,
+								6428
 							]
 						],
 						"settings":
@@ -151,7 +167,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 113.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -190,9 +206,13 @@
 		]
 	},
 	"menu_visible": true,
+	"output.astyle_error_message":
+	{
+		"height": 0.0
+	},
 	"output.exec":
 	{
-		"height": 212.0
+		"height": 119.0
 	},
 	"output.upload|/home/john/Dropbox/Projects/ArduinoWeatherStation/src|1447351634.83":
 	{
@@ -223,10 +243,10 @@
 		],
 		"width": 0.0
 	},
-	"show_minimap": true,
+	"show_minimap": false,
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 168.0,
+	"side_bar_width": 175.0,
 	"status_bar_visible": true
 }

@@ -10,8 +10,16 @@
 
 #include "configuration.h"
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <SoftwareSerial.h>
+#include <ESP8266WiFi.h>   
+#include <SoftwareSerial.h> 
+#include <DS1302.h>
+#include "EpochTime.h"
+
+// Init the DS1302
+DS1302 rtc(2, 13,15);
+// Init a Time-data structure
+Time t;
+
 
 String getClientOutput(void);
 String getcsvOutput(void);
@@ -35,8 +43,41 @@ unsigned long int lastUpdate = 0;
 String s = "";
 
 WiFiServer server(80);
+
+byte dataByte;
+
+byte buffer[24];
+int bufferindex = 0;
+
+// I'v define a packet to be as follows
+// H is header   3 chars
+// D is data     12 chars
+// C is checksum 2 chars
+// so
+// HHHDDDDDDDDDDDDCC
+//
+// and in the D section
+// byte 0 high byte of temperature
+// byte 1 low byte of temperature
+// byte 2 high byte of pressure
+// byte 3 low byte of pressure
+// byte 4 wind ordinal (values should be 0 - 15 to represent compass points)
+// byte 5 Humdity (value range 0 - 100)
+// bytes 6 to 9 rain tipper vale
+// byte 10 Wind speed high byte
+// byte 11 Wind speed low byte
+struct packet {
+  byte header[3];
+  byte data[14];
+  byte checksum[2];
+}my_packet;
+
 void setup()
 {
+    // Set the clock to run-mode, and disable the write protection
+  rtc.halt(false);
+  rtc.writeProtect(true);
+
   pinMode(green_led, OUTPUT);
   pinMode(red_led, OUTPUT);
 
@@ -88,40 +129,6 @@ void setup()
   digitalWrite(red_led, LOW);
   digitalWrite(green_led, LOW);
 }
-byte dataByte;
-
-//byte buffer[24];
-int bufferindex = 0;
-
-// I'v define a packet to be as follows
-// H is header   3 chars
-// D is data     12 chars
-// C is checksum 2 chars
-// so
-// HHHDDDDDDDDDDDDCC
-//
-// and in the D section
-// byte 0 high byte of temperature
-// byte 1 low byte of temperature
-// byte 2 high byte of pressure
-// byte 3 low byte of pressure
-// byte 4 wind ordinal (values should be 0 - 15 to represent compass points)
-// byte 5 Humdity (value range 0 - 100)
-// bytes 6 to 9 rain tipper vale
-// byte 10 Wind speed high byte
-// byte 11 Wind speed low byte
-
-struct packet {
-  byte header[3];
-  byte data[14];
-  byte checksum[2];
-  byte paddinge[5];
-};
-
-union {
-  struct packet my_packet;
-  byte buffer[24];
-} stream_data;
 
 void loop() // run over and over
 {
@@ -130,48 +137,48 @@ void loop() // run over and over
     dataByte = mySerial.read();
 
     if (dataByte == 13) {
-      /*
-      stream_data.my_packet.header[0] = buffer[1];
-      stream_data.my_packet.header[1] = buffer[2];
-      stream_data.my_packet.header[2] = buffer[3];
+      my_packet.header[0] = buffer[1];
+      my_packet.header[1] = buffer[2];
+      my_packet.header[2] = buffer[3];
 
-      stream_data.my_packet.data[0] = buffer[4]; // Temp
-      stream_data.my_packet.data[1] = buffer[5]; // Temp
-      stream_data.my_packet.data[2] = buffer[6]; // Pressure
-      stream_data.my_packet.data[3] = buffer[7]; // Pressure
-      stream_data.my_packet.data[4] = buffer[8]; // Win Dir
-      stream_data.my_packet.data[5] = buffer[9]; // Humidity
-      stream_data.my_packet.data[6] = buffer[10]; // Rain
-      stream_data.my_packet.data[7] = buffer[11]; // Rain
-      stream_data.my_packet.data[8] = buffer[12]; // Rain
-      stream_data.my_packet.data[9] = buffer[13]; // Rain
-      stream_data.my_packet.data[10] = buffer[14]; //Wind Speed
-      stream_data.my_packet.data[11] = buffer[15]; //Wind Speed
-      stream_data.my_packet.data[12] = buffer[16]; //Light Value
-      stream_data.my_packet.data[13] = buffer[17]; //Light Value
+      my_packet.data[0] = buffer[4]; // Temp
+      my_packet.data[1] = buffer[5]; // Temp
+      my_packet.data[2] = buffer[6]; // Pressure
+      my_packet.data[3] = buffer[7]; // Pressure
+      my_packet.data[4] = buffer[8]; // Win Dir
+      my_packet.data[5] = buffer[9]; // Humidity
+      my_packet.data[6] = buffer[10]; // Rain
+      my_packet.data[7] = buffer[11]; // Rain
+      my_packet.data[8] = buffer[12]; // Rain
+      my_packet.data[9] = buffer[13]; // Rain
+      my_packet.data[10] = buffer[14]; //Wind Speed
+      my_packet.data[11] = buffer[15]; //Wind Speed
+      my_packet.data[12] = buffer[16]; //Light Value
+      my_packet.data[13] = buffer[17]; //Light Value
 
-      stream_data.my_packet.checksum[0] = buffer[18]; // Lowbyte
-      stream_data.my_packet.checksum[1] = buffer[19]; //Highbyte
-      */
+      my_packet.checksum[0] = buffer[18]; // Lowbyte
+      my_packet.checksum[1] = buffer[19]; //Highbyte
 
       /// Perform checksum
       int checksum = 0;
       for (int i = 0; i < 14; ++i) {
-        checksum += stream_data.my_packet.data[i];
+        checksum += my_packet.data[i];
       }
-      if (checksum == ( stream_data.my_packet.checksum[0] << 8 ) + stream_data.my_packet.checksum[1]) {
+      if (checksum == ( my_packet.checksum[0] << 8 ) + my_packet.checksum[1]) {
         digitalWrite(green_led, HIGH);
+       // Serial.print(getEpochTime(rtc.getTime()));
+  Serial.println();
 #ifdef DEBUG
         Serial.println("Checksum valid");
 #endif
-        temperature = ( stream_data.my_packet.data[0] << 8 ) + stream_data.my_packet.data[1];
+        temperature = ( my_packet.data[0] << 8 ) + my_packet.data[1];
         temperature = (temperature / 10) - 120;
 #ifdef DEBUG
         Serial.print("Temperature = ");
         Serial.println(temperature);
 #endif
 
-        pressure = ( stream_data.my_packet.data[2] << 8 ) + stream_data.my_packet.data[3];
+        pressure = ( my_packet.data[2] << 8 ) + my_packet.data[3];
         pressure = (pressure / 10) - 800;
 #ifdef DEBUG
         Serial.print("Pressure = ");
@@ -180,13 +187,13 @@ void loop() // run over and over
 
 
         // Wind Ordinal
-        windDir = stream_data.my_packet.data[4];
+        windDir = my_packet.data[4];
 #ifdef DEBUG
         Serial.print("Wind Dir: = ");
         Serial.println(windDir);
 #endif
 
-        humidity = stream_data.my_packet.data[5];
+        humidity = my_packet.data[5];
 #ifdef DEBUG
         Serial.print("Humidity = ");
         Serial.print(humidity);
@@ -194,7 +201,7 @@ void loop() // run over and over
 #endif
 
 
-        windSpeed = ( stream_data.my_packet.data[10] << 8 ) + stream_data.my_packet.data[11];
+        windSpeed = ( my_packet.data[10] << 8 ) + my_packet.data[11];
         windSpeed = (windSpeed / 100) - 45;
 #ifdef DEBUG
         Serial.print("Wind Speed = ");
@@ -204,18 +211,18 @@ void loop() // run over and over
 
         // Rain tipper counter
         // unsigned long int rainTipperCounter;
-        rainTipperCounter = stream_data.my_packet.data[6];
-        rainTipperCounter = (rainTipperCounter << 8) + stream_data.my_packet.data[7];
-        rainTipperCounter = (rainTipperCounter << 8) + stream_data.my_packet.data[8];
-        rainTipperCounter = (rainTipperCounter << 8) + stream_data.my_packet.data[9];
+        rainTipperCounter = my_packet.data[6];
+        rainTipperCounter = (rainTipperCounter << 8) + my_packet.data[7];
+        rainTipperCounter = (rainTipperCounter << 8) + my_packet.data[8];
+        rainTipperCounter = (rainTipperCounter << 8) + my_packet.data[9];
 
 #ifdef DEBUG
         Serial.print("Rain Tipper Counter = ");
         Serial.println(rainTipperCounter );
-
+        
 #endif
 
-        lightValue = ( stream_data.my_packet.data[12] << 8 ) + stream_data.my_packet.data[13];
+        lightValue = ( my_packet.data[12] << 8 ) + my_packet.data[13];
 
 #ifdef DEBUG
         Serial.print("Light Value = ");
@@ -224,15 +231,14 @@ void loop() // run over and over
 #endif
       }
 
+      bufferindex = 0;
+      digitalWrite(green_led, LOW);
 #ifdef DEBUG
       Serial.println();
 #endif
-
-      bufferindex = 0;
-      digitalWrite(green_led, LOW);
     }
     else {
-      stream_data.buffer[bufferindex] = dataByte;
+      buffer[bufferindex] = dataByte;
       bufferindex++;
     }
   }
@@ -293,7 +299,7 @@ String getcsvOutput() {
   s += ",";
   s += lightValue ;
   s += ",";
-  s += lastUpdate;
+  s += getEpochTime();
   return s;
 }
 
@@ -308,23 +314,20 @@ String getClientOutput() {
   s += "<body>\r\n";
   s += "<head>\r\n";
   s += "<title>Arduino Serial Weather Station</title>\r\n";
+
   s += "</head>\r\n";
-
   s += "<h3>Last good readings</h3>\r\n";
-
   s += "Temperature: \r\n";
   s += temperature;
   s += " degrees C\r\n";
   s += "<br />\r\n";
-
   s += "Pressure: " + String(pressure);
   s += " Pa\r\n";
   s += "<br />\r\n";
-
   s += "Wind Direction: \r\n";
   s += windDir;
-  s += "<br />\r\n";
 
+  s += "<br />\r\n";
   s += "Humidity: \r\n";
   s += humidity;
   s += "<br />\r\n";
@@ -342,12 +345,11 @@ String getClientOutput() {
   s += "<br />\r\n";
 
   s += "Last Update: \r\n";
-  s += lastUpdate;
-  s += "<br />\r\n";
 
+  s += getEpochTime();
+  s += "<br />\r\n";
   s += "</body>\r\n";
   s += "</html>\r\n";
 
   return s;
 }
-
