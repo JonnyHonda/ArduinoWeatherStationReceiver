@@ -258,7 +258,7 @@ void loop()
         // Match the request
         if (req.indexOf("/csv") != -1) {
           s = getcsvOutput();
-        } else (req.indexOf("/settime") != -1) {
+        } else if(req.indexOf("/settime") != -1) {
           //TODO: Put Set Time code here
         }else{
           s = getClientOutput();
@@ -276,7 +276,7 @@ void loop()
 }
 
 
-String getcsvOutput() {
+String getcsvOutput() { 
   s = "";
   s = temperature;
   s += ",";
@@ -346,3 +346,5 @@ String getClientOutput() {
 
   return s;
 }
+
+
