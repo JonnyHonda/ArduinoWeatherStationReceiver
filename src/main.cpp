@@ -4,8 +4,8 @@
 
 #include "configuration.h"
 #include <Arduino.h>
-#include <ESP8266WiFi.h>   
-#include <SoftwareSerial.h> 
+#include <ESP8266WiFi.h>
+#include <SoftwareSerial.h>
 #include <DS1302.h>
 #include <EpochTime.h>
 
@@ -17,7 +17,7 @@ Time t;
 
 String getClientOutput(void);
 String getcsvOutput(void);
-void setTime(String);
+String setTime(String);
 
 SoftwareSerial mySerial(SSRX, SSTX); // RX, TX
 
@@ -28,8 +28,9 @@ double windSpeed = 0.0;
 int humidity = 0;
 int lightValue = 0;
 unsigned long int rainTipperCounter = 0;
+unsigned long int bootTime = 0; // the epoch time the device last started
 
-String s = "";
+String webPage = "";
 
 // Create an instance of the server
 // specify the port to listen on as an argument
@@ -61,11 +62,12 @@ struct packet {
   byte header[HEADER_SIZE];
   byte data[DATA_SIZE];
   byte checksum[CHECKSUM_SIZE];
-}my_packet;
+} my_packet;
 
 void setup()
 {
-  #ifdef DEBUG
+  bootTime = getEpochTime();
+#ifdef DEBUG
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   Serial.println("Beginning setup");
@@ -80,7 +82,7 @@ void setup()
 
   // set the data rate for the SoftwareSerial port
   mySerial.begin(9600);
-  
+
   // Connect to WiFi network
 #ifdef DEBUG
   Serial.println();
@@ -90,16 +92,16 @@ void setup()
 #endif
   WiFi.begin(SSSID, PASSWORD);
 
-    digitalWrite(RED_LED, HIGH);
-    digitalWrite(GREEN_LED, HIGH);
-while (WiFi.status() != WL_CONNECTED) {
+  digitalWrite(RED_LED, HIGH);
+  digitalWrite(GREEN_LED, HIGH);
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
 #ifdef DEBUG
     Serial.print(".");
 #endif
-}
-    digitalWrite(RED_LED, LOW);
-    digitalWrite(GREEN_LED, LOW); 
+  }
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(GREEN_LED, LOW);
 #ifdef DEBUG
   Serial.println();
   Serial.println("WiFi connected");
@@ -119,7 +121,7 @@ while (WiFi.status() != WL_CONNECTED) {
   digitalWrite(RED_LED, LOW);
   digitalWrite(GREEN_LED, LOW);
 
-  #ifdef DEBUG
+#ifdef DEBUG
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   Serial.println("Setup complete");
@@ -210,7 +212,7 @@ void loop()
 #ifdef DEBUG
         Serial.print("Rain Tipper Counter = ");
         Serial.println(rainTipperCounter );
-        
+
 #endif
 
         // Light Value
@@ -258,14 +260,34 @@ void loop()
         digitalWrite(RED_LED, HIGH);
         // Match the request
         if (req.indexOf("/csv") != -1) {
-          s = getcsvOutput();
-        } else if(req.indexOf("/settime") != -1) {
-          //TODO: Put Set Time code here
-          setTime(req);
-        }else{
-          s = getClientOutput();
+          webPage = getcsvOutput();
+        } else if (req.indexOf("/settime") != -1) {
+          pinMode(ENABLE_SET_TIME_PIN, INPUT);
+          if (digitalRead(ENABLE_SET_TIME_PIN) == HIGH) {
+#ifdef DEBUG
+            Serial.println("Setting Time");
+#endif
+            webPage = setTime(req);
+          } else {
+#ifdef DEBUG
+            Serial.println("Can't set Time");
+#endif
+            webPage = "HTTP/1.1 200 OK\r\n";
+            webPage += "Content-Type: text/html\r\n";
+            webPage += "Connection: close\r\n\r\n"; // the connection will be closed after completion of the response
+
+            webPage += "<html><body><head>";
+            webPage += "<title>Arduino Weather Station - Error</title>";
+            webPage += "</head>";
+            webPage += "<h3>Error Setting Time</h3>";
+            webPage += "Can't set Time - Check <b>Enable Set Time</b> jumper</br>\r\n";
+            webPage += "<a href=\"/\">home</a>";
+            webPage += "</body><html>";
+          }
+        } else {
+          webPage = getClientOutput();
         }
-        client.print(s);
+        client.print(webPage);
         delay(1);
         client.stop();
 #ifdef DEBUG
@@ -278,8 +300,8 @@ void loop()
 }
 
 
-String getcsvOutput() { 
-  s = "";
+String getcsvOutput() {
+  String s = "";
   s = temperature;
   s += ",";
   s += pressure;
@@ -299,7 +321,7 @@ String getcsvOutput() {
 }
 
 String getClientOutput() {
-  s = "HTTP/1.1 200 OK\r\n";
+  String s = "HTTP/1.1 200 OK\r\n";
   s += "Content-Type: text/html\r\n";
   s += "Connection: close\r\n"; // the connection will be closed after completion of the response
   s += "Refresh: 60\r\n\r\n"; // refresh the page automatically every 60 sec
@@ -339,9 +361,14 @@ String getClientOutput() {
   s += lightValue;
   s += "<br />\r\n";
 
-  s += "Last Update: \r\n";
+  s += "<p id=\"date\"></p>\r\n";
 
-  s += getEpochTime();
+  s += "<script>\r\n";
+  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
+  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + d;\r\n";
+  s += "</script>\r\n";
+
+
   s += "<br />\r\n";
   s += "</body>\r\n";
   s += "</html>\r\n";
@@ -349,28 +376,69 @@ String getClientOutput() {
   return s;
 }
 
-void setTime(String uri){
-    int index = uri.lastIndexOf('=');
-  int l = uri.length();
-  String date = uri.substring(index + 1, l - 1);
-  
-  // extract the various elements from date 
-  // zero being the first element
-  // 2016-01-26T23:59:00
-  int year = date.substring(0, 4).toInt();
-  int month = date.substring(5, 2).toInt();
-  int day = date.substring(8, 2).toInt();
-  int hour = date.substring(11, 2).toInt();
-  int min = date.substring(14, 2).toInt();
-  int sec = date.substring(17, 2).toInt();
+/**
+@name: setTime
+@param: String uri
+@description: Function to set the time via a url.
+@todo: add functionality to secure this, best bet would be to have a jumper on the board holding a pin high and only change it then
+curl http://weather617.servebeer.com/settime?2016-02-02T11:52:02-2
 
+**/
+String setTime(String uri) {
+  int index = uri.lastIndexOf('?');
+  int l = uri.lastIndexOf(' ');
+  String date = uri.substring(index + 1, l);
+
+  // extract the various elements from date
+  // zero being the first element
+  // 2016-01-26T23:59:00-7
+
+  int year = date.substring(0, 4).toInt();
+  int month = date.substring(5, 7).toInt();
+  int day = date.substring(8, 10).toInt();
+  int hour = date.substring(11, 13).toInt();
+  int min = date.substring(14, 16).toInt();
+  int sec = date.substring(17, 19).toInt();
+  int dow = date.substring(20, 21).toInt();
+#ifdef DEBUG
+  Serial.println(date);
+  Serial.print(day, DEC); Serial.print("/"); Serial.print(month, DEC); Serial.print("/"); Serial.print(year, DEC);
+  Serial.println();
+  Serial.print(hour, DEC); Serial.print(":"); Serial.print(min, DEC); Serial.print(":"); Serial.print(sec, DEC);
+  Serial.println();
+  Serial.print("dow "); Serial.print(dow, DEC);
+#endif
   rtc.halt(false);
   rtc.writeProtect(false);
 
-    // The following lines can be commented out to use the values already stored in the DS1302
-  //rtc.setDOW(FRIDAY);        // Set Day-of-Week to FRIDAY
-  rtc.setTime(hour, min, sec);     // Set the time to 12:00:00 (24hr format)
-  rtc.setDate(day, month, year);   // Set the date to August 6th, 2010
+  // The following lines can be commented out to use the values already stored in the DS1302
+  rtc.setDOW(dow);        // Set Day-of-Week Monday will be a one
+  rtc.setTime(hour, min, sec);     // Set the time (24hr format)
+  rtc.setDate(day, month, year);   // Set the date
 
-  rtc.writeProtect(false);
+  rtc.writeProtect(true);
+
+  String s = "HTTP/1.1 200 OK\r\n";
+  s += "Content-Type: text/html\r\n";
+  s += "Connection: close\r\n\r\n"; // the connection will be closed after completion of the response
+
+  s += "<!DOCTYPE HTML>\r\n";
+  s += "<html>\r\n";
+  s += "<body>\r\n";
+  s += "<head>\r\n";
+  s += "<title>Arduino Serial Weather Station</title>\r\n";
+
+  s += "</head>\r\n";
+  s += "<h3>Clock set</h3>\r\n";
+  s += "<p id=\"date\"></p>\r\n";
+
+  s += "<script>\r\n";
+  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
+  s += "document.getElementById(\"date\").innerHTML = d;\r\n";
+  s += "</script>\r\n";
+  s += "<br />\r\n";
+  s += "<a href=\"/\">Home</a>";
+  s += "</body>\r\n";
+  s += "</html>\r\n";
+  return s;
 }
