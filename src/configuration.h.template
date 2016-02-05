@@ -3,9 +3,9 @@
 #define SSSID "STATION-SSID";
 #define PASSWORD "PASSWORD";
 
-#define CEpin 2			//-> Arduino Digital 2 purple
-#define IOpin 13		//-> Arduino Digital 13 gray
-#define SCLKpin 15    	//  -> Arduino Digital 15 white
+#define CEpin 2			// -> Arduino Digital 2 purple
+#define IOpin 13		// -> Arduino Digital 13 gray
+#define SCLKpin 15    	// -> Arduino Digital 15 white
 
 #define SSRX 14			// Software Serial RX Pin
 #define SSTX 12			// Software Serial TX Pin
