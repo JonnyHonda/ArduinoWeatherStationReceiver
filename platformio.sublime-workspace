@@ -56,13 +56,10 @@
 	"buffers":
 	[
 		{
-			"contents": "/*\n\n*/\n\n#include \"configuration.h\"\n#include <Arduino.h>\n#include <ESP8266WiFi.h>\n#include <SoftwareSerial.h>\n#include <DS1302.h>\n#include <EpochTime.h>\n\n// Init the DS1302\nDS1302 rtc(CEpin, IOpin, SCLKpin);\n\n// Init a Time-data structure\nTime t;\n\nString getClientOutput(void);\nString getcsvOutput(void);\nString setTime(String);\n\nSoftwareSerial mySerial(SSRX, SSTX); // RX, TX\n\ndouble temperature = 0.00;\ndouble pressure = 0.00;\nint windDir = 0;\ndouble windSpeed = 0.0;\nint humidity = 0;\nint lightValue = 0;\nunsigned long int rainTipperCounter = 0;\nunsigned long int bootTime = 0; // the epoch time the device last started\n\nString webPage = \"\";\n\n// Create an instance of the server\n// specify the port to listen on as an argument\nWiFiServer server(WEB_PORT);\n\nbyte dataByte;\n\nbyte buffer[24];\nint bufferindex = 0;\n\n// I've define a packet to be as follows\n// H is header   3 chars\n// D is data     12 chars\n// C is checksum 2 chars\n// so\n// HHHDDDDDDDDDDDDCC\n//\n// and in the D section\n// byte 0 high byte of temperature\n// byte 1 low byte of temperature\n// byte 2 high byte of pressure\n// byte 3 low byte of pressure\n// byte 4 wind ordinal (values should be 0 - 15 to represent compass points)\n// byte 5 Humdity (value range 0 - 100)\n// bytes 6 to 9 rain tipper vale\n// byte 10 Wind speed high byte\n// byte 11 Wind speed low byte\nstruct packet {\n  byte header[HEADER_SIZE];\n  byte data[DATA_SIZE];\n  byte checksum[CHECKSUM_SIZE];\n} my_packet;\n\nvoid setup()\n{\n  bootTime = getEpochTime();\n#ifdef DEBUG\n  // Open serial communications and wait for port to open:\n  Serial.begin(9600);\n  Serial.println(\"Beginning setup\");\n#endif\n\n  // Set the clock to run-mode, and disable the write protection\n  rtc.halt(false);\n  rtc.writeProtect(true);\n\n  pinMode(GREEN_LED, OUTPUT);\n  pinMode(RED_LED, OUTPUT);\n\n  // set the data rate for the SoftwareSerial port\n  mySerial.begin(9600);\n\n  // Connect to WiFi network\n#ifdef DEBUG\n  Serial.println();\n  Serial.println();\n  Serial.print(\"Connecting to \");\n  Serial.println(SSSID);\n#endif\n  WiFi.begin(SSSID, PASSWORD);\n\n  digitalWrite(RED_LED, HIGH);\n  digitalWrite(GREEN_LED, HIGH);\n  while (WiFi.status() != WL_CONNECTED) {\n    delay(500);\n#ifdef DEBUG\n    Serial.print(\".\");\n#endif\n  }\n  digitalWrite(RED_LED, LOW);\n  digitalWrite(GREEN_LED, LOW);\n#ifdef DEBUG\n  Serial.println();\n  Serial.println(\"WiFi connected\");\n#endif\n\n  // Start the server\n  server.begin();\n#ifdef DEBUG\n  Serial.println(\"Server started\");\n#endif\n\n  // Print the IP address\n#ifdef DEBUG\n  Serial.println(WiFi.localIP());\n#endif\n\n  digitalWrite(RED_LED, LOW);\n  digitalWrite(GREEN_LED, LOW);\n\n#ifdef DEBUG\n  // Open serial communications and wait for port to open:\n  Serial.begin(9600);\n  Serial.println(\"Setup complete\");\n#endif\n}\n\nvoid loop()\n{\n  if (mySerial.available()) {\n    dataByte = mySerial.read();\n\n    if (dataByte == 13) {\n      my_packet.header[0] = buffer[1];\n      my_packet.header[1] = buffer[2];\n      my_packet.header[2] = buffer[3];\n\n      my_packet.data[0] = buffer[4]; // Temp\n      my_packet.data[1] = buffer[5]; // Temp\n      my_packet.data[2] = buffer[6]; // Pressure\n      my_packet.data[3] = buffer[7]; // Pressure\n      my_packet.data[4] = buffer[8]; // Win Dir\n      my_packet.data[5] = buffer[9]; // Humidity\n      my_packet.data[6] = buffer[10]; // Rain\n      my_packet.data[7] = buffer[11]; // Rain\n      my_packet.data[8] = buffer[12]; // Rain\n      my_packet.data[9] = buffer[13]; // Rain\n      my_packet.data[10] = buffer[14]; //Wind Speed\n      my_packet.data[11] = buffer[15]; //Wind Speed\n      my_packet.data[12] = buffer[16]; //Light Value\n      my_packet.data[13] = buffer[17]; //Light Value\n\n      my_packet.checksum[0] = buffer[18]; // Lowbyte\n      my_packet.checksum[1] = buffer[19]; //Highbyte\n\n      /// Perform checksum\n      int checksum = 0;\n      for (int i = 0; i < DATA_SIZE; ++i) {\n        checksum += my_packet.data[i];\n      }\n\n      if (checksum == ( my_packet.checksum[0] << 8 ) + my_packet.checksum[1]) {\n        digitalWrite(GREEN_LED, HIGH);\n\n        // Temperature\n        temperature = ( my_packet.data[0] << 8 ) + my_packet.data[1];\n        temperature = (temperature / 10) - 120;\n#ifdef DEBUG\n        Serial.print(\"Temperature = \");\n        Serial.println(temperature);\n#endif\n\n        //Pressure\n        pressure = ( my_packet.data[2] << 8 ) + my_packet.data[3];\n        pressure = (pressure / 10) - 800;\n#ifdef DEBUG\n        Serial.print(\"Pressure = \");\n        Serial.println(pressure);\n#endif\n\n        // Wind Ordinal\n        windDir = my_packet.data[4];\n#ifdef DEBUG\n        Serial.print(\"Wind Dir: = \");\n        Serial.println(windDir);\n#endif\n\n        // Humidity\n        humidity = my_packet.data[5];\n#ifdef DEBUG\n        Serial.print(\"Humidity = \");\n        Serial.print(humidity);\n        Serial.println(\"%\");\n#endif\n\n        // Wind Speed\n        windSpeed = ( my_packet.data[10] << 8 ) + my_packet.data[11];\n        windSpeed = (windSpeed / 100) - 45;\n#ifdef DEBUG\n        Serial.print(\"Wind Speed = \");\n        Serial.println(windSpeed);\n#endif\n\n        // Rain tipper counter\n        rainTipperCounter = my_packet.data[6];\n        rainTipperCounter = (rainTipperCounter << 8) + my_packet.data[7];\n        rainTipperCounter = (rainTipperCounter << 8) + my_packet.data[8];\n        rainTipperCounter = (rainTipperCounter << 8) + my_packet.data[9];\n#ifdef DEBUG\n        Serial.print(\"Rain Tipper Counter = \");\n        Serial.println(rainTipperCounter );\n\n#endif\n\n        // Light Value\n        lightValue = ( my_packet.data[12] << 8 ) + my_packet.data[13];\n#ifdef DEBUG\n        Serial.print(\"Light Value = \");\n        Serial.println(lightValue);\n        Serial.print(getEpochTime());\n#endif\n      }\n\n      bufferindex = 0;\n      digitalWrite(GREEN_LED, LOW);\n\n#ifdef DEBUG\n      Serial.println();\n#endif\n    }\n    else {\n      buffer[bufferindex] = dataByte;\n      bufferindex++;\n    }\n  }\n\n  // Check if a client has connected\n  WiFiClient client = server.available();\n  if (client) {\n#ifdef DEBUG\n    Serial.println(\"new client\");\n#endif\n    // an http request ends with a blank line\n    boolean currentLineIsBlank = true;\n    while (client.connected()) {\n      if (client.available()) {\n#ifdef DEBUG\n        Serial.println(\"Client is available\");\n#endif\n        // Read the first line of the request\n        String req = client.readStringUntil('\\r');\n#ifdef DEBUG\n        Serial.println(req);\n#endif\n        client.flush();\n        // Prepare the response\n        digitalWrite(RED_LED, HIGH);\n        // Match the request\n        if (req.indexOf(\"/csv\") != -1) {\n          webPage = getcsvOutput();\n        } else if (req.indexOf(\"/settime\") != -1) {\n          pinMode(ENABLE_SET_TIME_PIN, INPUT);\n          if (digitalRead(ENABLE_SET_TIME_PIN) == HIGH) {\n#ifdef DEBUG\n            Serial.println(\"Setting Time\");\n#endif\n            webPage = setTime(req);\n          } else {\n#ifdef DEBUG\n            Serial.println(\"Can't set Time\");\n#endif\n            webPage = \"HTTP/1.1 200 OK\\r\\n\";\n            webPage += \"Content-Type: text/html\\r\\n\";\n            webPage += \"Connection: close\\r\\n\\r\\n\"; // the connection will be closed after completion of the response\n\n            webPage += \"<html><body><head>\";\n            webPage += \"<title>Arduino Weather Station - Error</title>\";\n            webPage += \"</head>\";\n            webPage += \"<h3>Error Setting Time</h3>\";\n            webPage += \"Can't set Time - Check <b>Enable Set Time</b> jumper</br>\\r\\n\";\n            webPage += \"<a href=\\\"/\\\">home</a>\";\n            webPage += \"</body><html>\";\n          }\n        } else {\n          webPage = getClientOutput();\n        }\n        client.print(webPage);\n        delay(1);\n        client.stop();\n#ifdef DEBUG\n        Serial.println(\"Client disconnected\");\n#endif\n        digitalWrite(RED_LED, LOW);\n      }\n    }\n  }\n}\n\n\nString getcsvOutput() {\n  String s = \"\";\n  s = temperature;\n  s += \",\";\n  s += pressure;\n  s += \",\";\n  s += windDir;\n  s += \",\";\n  s += humidity ;\n  s += \",\";\n  s += windSpeed ;\n  s += \",\";\n  s += rainTipperCounter ;\n  s += \",\";\n  s += lightValue ;\n  s += \",\";\n  s += getEpochTime();\n  return s;\n}\n\nString getClientOutput() {\n  String s = \"HTTP/1.1 200 OK\\r\\n\";\n  s += \"Content-Type: text/html\\r\\n\";\n  s += \"Connection: close\\r\\n\"; // the connection will be closed after completion of the response\n  s += \"Refresh: 60\\r\\n\\r\\n\"; // refresh the page automatically every 60 sec\n\n  s += \"<!DOCTYPE HTML>\\r\\n\";\n  s += \"<html>\\r\\n\";\n  s += \"<body>\\r\\n\";\n  s += \"<head>\\r\\n\";\n  s += \"<title>Arduino Serial Weather Station</title>\\r\\n\";\n\n  s += \"</head>\\r\\n\";\n  s += \"<h3>Last good readings</h3>\\r\\n\";\n  s += \"Temperature: \\r\\n\";\n  s += temperature;\n  s += \" degrees C\\r\\n\";\n  s += \"<br />\\r\\n\";\n  s += \"Pressure: \" + String(pressure);\n  s += \" Pa\\r\\n\";\n  s += \"<br />\\r\\n\";\n  s += \"Wind Direction: \\r\\n\";\n  s += windDir;\n\n  s += \"<br />\\r\\n\";\n  s += \"Humidity: \\r\\n\";\n  s += humidity;\n  s += \"<br />\\r\\n\";\n\n  s += \"Wind Speed: \\r\\n\";\n  s += windSpeed;\n  s += \"<br />\\r\\n\";\n\n  s += \"Rain counter: \\r\\n\";\n  s += rainTipperCounter;\n  s += \"<br />\\r\\n\";\n\n  s += \"Light Value: \\r\\n\";\n  s += lightValue;\n  s += \"<br />\\r\\n\";\n\n  s += \"<p id=\\\"date\\\"></p>\\r\\n\";\n\n  s += \"<script>\\r\\n\";\n  s += \"var d = new Date(\" + (String) getEpochTime() + \"000);\\r\\n\";\n  s += \"document.getElementById(\\\"date\\\").innerHTML = \\\"Last Update: \\\" + d;\\r\\n\";\n  s += \"</script>\\r\\n\";\n\n\n  s += \"<br />\\r\\n\";\n  s += \"</body>\\r\\n\";\n  s += \"</html>\\r\\n\";\n\n  return s;\n}\n\n/**\n@name: setTime\n@param: String uri\n@description: Function to set the time via a url.\n@todo: add functionality to secure this, best bet would be to have a jumper on the board holding a pin high and only change it then\ncurl http://weather617.servebeer.com/settime?2016-02-02T11:52:02-2\n\n**/\nString setTime(String uri) {\n  int index = uri.lastIndexOf('?');\n  \n  int l = uri.lastIndexOf(' ');\n  String date = uri.substring(index + 1, l);\n\n  // extract the various elements from date\n  // zero being the first element\n  // 2016-01-26T23:59:00-7\n\n  int year = date.substring(0, 4).toInt();\n  int month = date.substring(5, 7).toInt();\n  int day = date.substring(8, 10).toInt();\n  int hour = date.substring(11, 13).toInt();\n  int min = date.substring(14, 16).toInt();\n  int sec = date.substring(17, 19).toInt();\n  int dow = date.substring(20, 21).toInt();\n#ifdef DEBUG\n  Serial.println(date);\n  Serial.print(day, DEC); Serial.print(\"/\"); Serial.print(month, DEC); Serial.print(\"/\"); Serial.print(year, DEC);\n  Serial.println();\n  Serial.print(hour, DEC); Serial.print(\":\"); Serial.print(min, DEC); Serial.print(\":\"); Serial.print(sec, DEC);\n  Serial.println();\n  Serial.print(\"dow \"); Serial.print(dow, DEC);\n#endif\n  rtc.halt(false);\n  rtc.writeProtect(false);\n\n  // The following lines can be commented out to use the values already stored in the DS1302\n  rtc.setDOW(dow);        // Set Day-of-Week Monday will be a one\n  rtc.setTime(hour, min, sec);     // Set the time (24hr format)\n  rtc.setDate(day, month, year);   // Set the date\n\n  rtc.writeProtect(true);\n\n  String s = \"HTTP/1.1 200 OK\\r\\n\";\n  s += \"Content-Type: text/html\\r\\n\";\n  s += \"Connection: close\\r\\n\\r\\n\"; // the connection will be closed after completion of the response\n\n  s += \"<!DOCTYPE HTML>\\r\\n\";\n  s += \"<html>\\r\\n\";\n  s += \"<body>\\r\\n\";\n  s += \"<head>\\r\\n\";\n  s += \"<title>Arduino Serial Weather Station</title>\\r\\n\";\n\n  s += \"</head>\\r\\n\";\n  s += \"<h3>Clock set</h3>\\r\\n\";\n  s += \"<p id=\\\"date\\\"></p>\\r\\n\";\n\n  s += \"<script>\\r\\n\";\n  s += \"var d = new Date(\" + (String) getEpochTime() + \"000);\\r\\n\";\n  s += \"document.getElementById(\\\"date\\\").innerHTML = d;\\r\\n\";\n  s += \"</script>\\r\\n\";\n  s += \"<br />\\r\\n\";\n  s += \"<a href=\\\"/\\\">Home</a>\";\n  s += \"</body>\\r\\n\";\n  s += \"</html>\\r\\n\";\n  return s;\n}\n",
 			"file": "src/main.cpp",
-			"file_size": 11702,
-			"file_write_time": 1454441217000000,
 			"settings":
 			{
-				"buffer_size": 11705,
+				"buffer_size": 11852,
 				"line_ending": "Unix"
 			}
 		},
@@ -70,7 +67,7 @@
 			"file": "src/configuration.h",
 			"settings":
 			{
-				"buffer_size": 527,
+				"buffer_size": 592,
 				"line_ending": "Unix"
 			}
 		},
@@ -78,7 +75,7 @@
 			"file": "src/configuration.h.template",
 			"settings":
 			{
-				"buffer_size": 528,
+				"buffer_size": 594,
 				"line_ending": "Unix"
 			}
 		}
@@ -196,7 +193,7 @@
 					"file": "src/main.cpp",
 					"settings":
 					{
-						"buffer_size": 11705,
+						"buffer_size": 11852,
 						"regions":
 						{
 						},
@@ -214,7 +211,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 5372.0,
+						"translation.y": 1.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -224,15 +221,15 @@
 					"file": "src/configuration.h",
 					"settings":
 					{
-						"buffer_size": 527,
+						"buffer_size": 592,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								229,
-								80
+								202,
+								202
 							]
 						],
 						"settings":
@@ -250,15 +247,15 @@
 					"file": "src/configuration.h.template",
 					"settings":
 					{
-						"buffer_size": 528,
+						"buffer_size": 594,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								528,
-								528
+								204,
+								204
 							]
 						],
 						"settings":
