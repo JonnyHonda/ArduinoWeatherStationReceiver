@@ -59,7 +59,7 @@
 			"file": "src/main.cpp",
 			"settings":
 			{
-				"buffer_size": 11852,
+				"buffer_size": 11829,
 				"line_ending": "Unix"
 			}
 		},
@@ -67,7 +67,7 @@
 			"file": "src/configuration.h",
 			"settings":
 			{
-				"buffer_size": 592,
+				"buffer_size": 646,
 				"line_ending": "Unix"
 			}
 		},
@@ -75,7 +75,7 @@
 			"file": "src/configuration.h.template",
 			"settings":
 			{
-				"buffer_size": 594,
+				"buffer_size": 648,
 				"line_ending": "Unix"
 			}
 		}
@@ -156,6 +156,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"connectionTimeout",
 			" / ",
 			"RED_LED",
 			"green_led",
@@ -193,15 +194,15 @@
 					"file": "src/main.cpp",
 					"settings":
 					{
-						"buffer_size": 11852,
+						"buffer_size": 11829,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								6726,
-								6726
+								152,
+								152
 							]
 						],
 						"settings":
@@ -211,7 +212,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 934.0,
+						"translation.y": 1799.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -221,15 +222,15 @@
 					"file": "src/configuration.h",
 					"settings":
 					{
-						"buffer_size": 592,
+						"buffer_size": 646,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								202,
-								202
+								577,
+								556
 							]
 						],
 						"settings":
@@ -247,15 +248,15 @@
 					"file": "src/configuration.h.template",
 					"settings":
 					{
-						"buffer_size": 594,
+						"buffer_size": 648,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								204,
-								204
+								579,
+								579
 							]
 						],
 						"settings":
