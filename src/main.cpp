@@ -29,7 +29,6 @@ int humidity = 0;
 int lightValue = 0;
 unsigned long int rainTipperCounter = 0;
 unsigned long int bootTime = 0; // the epoch time the device last started
-unsigned long int connectionTimeout = 2000; // 2 second time out
 unsigned long int ct = 0; // 
 String webPage = "";
 
@@ -247,7 +246,7 @@ void loop()
     // an http request ends with a blank line
     boolean currentLineIsBlank = true;
     ct = millis();
-    while (client.connected() && ct < millis() + connectionTimeout) {
+    while (client.connected() && ct < millis() + CONNECTION_TIMEOUT) {
       if (client.available()) {
 #ifdef DEBUG
         Serial.println("Client is available");

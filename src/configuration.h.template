@@ -15,6 +15,7 @@
 
 #define ENABLE_SET_TIME_PIN 10; // pin to allow remote clock set
 #define WEB_PORT 80		// Internet port
+#define CONNECTION_TIMEOUT 2000 // Connection timeout
 
 #define HEADER_SIZE 3	
 #define DATA_SIZE 14
