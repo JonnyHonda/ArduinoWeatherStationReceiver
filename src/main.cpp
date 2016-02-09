@@ -336,6 +336,13 @@ String getClientOutput() {
 
   s += "</head>\r\n";
   s += "<h3>Last good readings</h3>\r\n";
+
+  s += "<script>\r\n";
+  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
+  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + d;\r\n";
+  s += "</script>\r\n";
+  s += "<p id=\"date\"></p>\r\n";
+  
   s += "Temperature: \r\n";
   s += temperature;
   s += " degrees C\r\n";
@@ -363,13 +370,11 @@ String getClientOutput() {
   s += lightValue;
   s += "<br />\r\n";
 
-  s += "<p id=\"date\"></p>\r\n";
-
   s += "<script>\r\n";
-  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
-  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + d;\r\n";
+  s += "var d = new Date(" + (String) bootTime + "000);\r\n";
+  s += "document.getElementById(\"bootdate\").innerHTML = \"Boot Time: \" + d;\r\n";
   s += "</script>\r\n";
-
+  s += "<p id=\"bootdate\"></p>\r\n";
 
   s += "<br />\r\n";
   s += "</body>\r\n";
@@ -382,7 +387,6 @@ String getClientOutput() {
 @name: setTime
 @param: String uri
 @description: Function to set the time via a url.
-@todo: add functionality to secure this, best bet would be to have a jumper on the board holding a pin high and only change it then
 curl http://weather617.servebeer.com/settime?2016-02-02T11:52:02-2
 
 **/
@@ -413,7 +417,7 @@ String setTime(String uri) {
   rtc.halt(false);
   rtc.writeProtect(false);
 
-  // The following lines can be commented out to use the values already stored in the DS1302
+  // Set the time in the DS1302
   rtc.setDOW(dow);        // Set Day-of-Week Monday will be a one
   rtc.setTime(hour, min, sec);     // Set the time (24hr format)
   rtc.setDate(day, month, year);   // Set the date
