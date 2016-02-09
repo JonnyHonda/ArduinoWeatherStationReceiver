@@ -335,11 +335,6 @@ String getClientOutput() {
 
   s += "</head>\r\n";
   s += "<h3>Last good readings</h3>\r\n";
-
-  s += "<script>\r\n";
-  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
-  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + d;\r\n";
-  s += "</script>\r\n";
   s += "<p id=\"date\"></p>\r\n";
   
   s += "Temperature: \r\n";
@@ -369,14 +364,17 @@ String getClientOutput() {
   s += lightValue;
   s += "<br />\r\n";
 
-  s += "<script>\r\n";
-  s += "var d = new Date(" + (String) bootTime + "000);\r\n";
-  s += "document.getElementById(\"bootdate\").innerHTML = \"Boot Time: \" + d;\r\n";
-  s += "</script>\r\n";
+
   s += "<p id=\"bootdate\"></p>\r\n";
 
   s += "<br />\r\n";
   s += "</body>\r\n";
+  s += "<script>\r\n";
+  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
+  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + d;\r\n";
+  s += "var d = new Date(" + (String) bootTime + "000);\r\n";
+  s += "document.getElementById(\"bootdate\").innerHTML = \"Boot Time: \" + d;\r\n";
+  s += "</script>\r\n";
   s += "</html>\r\n";
 
   return s;

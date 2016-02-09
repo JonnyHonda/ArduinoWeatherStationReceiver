@@ -7,6 +7,7 @@
 .sconsign.dblite
 #lib/
 platformio.sublime-project
+platformio.sublime-workspace
 .DS_Store
 
 # Config files
