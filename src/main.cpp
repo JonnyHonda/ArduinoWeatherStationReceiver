@@ -29,8 +29,8 @@ int humidity = 0;
 int lightValue = 0;
 unsigned long int rainTipperCounter = 0;
 unsigned long int bootTime = 0; // the epoch time the device last started
-unsigned long int ct = 0; // 
-String webPage = "";
+unsigned long int ct = 0; //
+
 
 // Create an instance of the server
 // specify the port to listen on as an argument
@@ -130,6 +130,7 @@ void setup()
 
 void loop()
 {
+  String webPage = "";
   if (mySerial.available()) {
     dataByte = mySerial.read();
 
@@ -239,6 +240,7 @@ void loop()
 
   // Check if a client has connected
   WiFiClient client = server.available();
+
   if (client) {
 #ifdef DEBUG
     Serial.println("new client");
@@ -249,11 +251,17 @@ void loop()
     while (client.connected() && ct < millis() + CONNECTION_TIMEOUT) {
       if (client.available()) {
 #ifdef DEBUG
-        Serial.println("Client is available");
+        Serial.print("Client is available IP = ");
+        IPAddress clinetIP = client.remoteIP();
+        Serial.println(clinetIP);
 #endif
         // Read the first line of the request
         String req = client.readStringUntil('\r');
 #ifdef DEBUG
+        Serial.println("The Request");
+        Serial.print("Length: ");
+        Serial.println(req.length());
+        Serial.print("Value: ");
         Serial.println(req);
 #endif
         client.flush();
@@ -261,6 +269,9 @@ void loop()
         digitalWrite(RED_LED, HIGH);
         // Match the request
         if (req.indexOf("/csv") != -1) {
+#ifdef DEBUG
+        Serial.println("csv page requested");
+#endif
           webPage = getcsvOutput();
         } else if (req.indexOf("/settime") != -1) {
           pinMode(ENABLE_SET_TIME_PIN, INPUT);
@@ -285,8 +296,23 @@ void loop()
             webPage += "<a href=\"/\">home</a>";
             webPage += "</body><html>";
           }
-        } else {
+        } else if (req.indexOf("/") != -1 && req.length() == 14) {
+#ifdef DEBUG
+        Serial.println("web page requested");
+#endif
           webPage = getClientOutput();
+        }else{
+          webPage = "HTTP/1.1 404 Not Found\r\n";
+          webPage += "Content-Type: text/html\r\n";
+          webPage += "Connection: close\r\n\r\n";
+
+          webPage += "<html><body><head>";
+            webPage += "<title>Arduino Weather Station - 404</title>";
+            webPage += "</head>";
+            webPage += "<h3>404 Page not found</h3>";
+            webPage += "This is not the page you were looking for\r\n";
+            webPage += "<a href=\"/\">home</a>";
+            webPage += "</body><html>";
         }
         client.print(webPage);
         delay(1);
@@ -325,8 +351,8 @@ String getClientOutput() {
   String s = "HTTP/1.1 200 OK\r\n";
   s += "Content-Type: text/html\r\n";
   s += "Connection: close\r\n"; // the connection will be closed after completion of the response
-  s += "Refresh: 60\r\n\r\n"; // refresh the page automatically every 60 sec
-
+  //s += "Refresh: 60"; // refresh the page automatically every 60 sec
+  s += "\r\n\r\n";
   s += "<!DOCTYPE HTML>\r\n";
   s += "<html>\r\n";
   s += "<body>\r\n";
@@ -336,7 +362,7 @@ String getClientOutput() {
   s += "</head>\r\n";
   s += "<h3>Last good readings</h3>\r\n";
   s += "<p id=\"date\"></p>\r\n";
-  
+
   s += "Temperature: \r\n";
   s += temperature;
   s += " degrees C\r\n";
@@ -363,17 +389,39 @@ String getClientOutput() {
   s += "Light Value: \r\n";
   s += lightValue;
   s += "<br />\r\n";
-
-
   s += "<p id=\"bootdate\"></p>\r\n";
+  s += "<br />\r\n";
+  s += "<p id=\"uptime\"></p>\r\n";
 
   s += "<br />\r\n";
   s += "</body>\r\n";
   s += "<script>\r\n";
-  s += "var d = new Date(" + (String) getEpochTime() + "000);\r\n";
-  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + d;\r\n";
-  s += "var d = new Date(" + (String) bootTime + "000);\r\n";
-  s += "document.getElementById(\"bootdate\").innerHTML = \"Boot Time: \" + d;\r\n";
+
+  s += "var et = new Date(" + (String) getEpochTime() + "000);\r\n";
+  s += "document.getElementById(\"date\").innerHTML = \"Last Update: \" + et;\r\n";
+
+  s += "var bt = new Date(" + (String) bootTime + "000);\r\n";
+  s += "document.getElementById(\"bootdate\").innerHTML = \"Boot Time: \" + bt;\r\n";
+
+  s += "var t = parseInt(" + (String) (getEpochTime() -  bootTime) + ");\r\n";
+  s += "var days = parseInt(t / 86400);\r\n";
+  s += "t = t - (days * 86400);\r\n";
+  s += "var hours = parseInt(t / 3600);\r\n";
+  s += "t = t - (hours * 3600);\r\n";
+  s += "var minutes = parseInt(t / 60);\r\n";
+  s += "t = t - (minutes * 60);\r\n";
+  s += "var content = \"\";\r\n";
+
+  s += "var seconds = t;\r\n";
+  s += "if (days)\r\n";
+  s += "\tcontent += (days == 1) ?  days + \" day \" :  days + \" days \";\r\n";
+  s += "if (hours)\r\n";
+  s += "\tcontent += (hours == 1) ?  hours + \" hour \" :  hours + \" hours \";\r\n";
+  s += "if (minutes)\r\n";
+  s += "\tcontent += (minutes == 1) ?  minutes + \" minute \" :  minutes + \" minutes \";\r\n";
+  s += "if (seconds)\r\n";
+  s += "\tcontent += (seconds == 1) ?  seconds + \" second \" :  seconds + \" seconds \";\r\n";
+  s += "document.getElementById(\"uptime\").innerHTML = \"Up Time: \" + content;\r\n";
   s += "</script>\r\n";
   s += "</html>\r\n";
 
@@ -395,14 +443,15 @@ String setTime(String uri) {
   // extract the various elements from date
   // zero being the first element
   // 2016-01-26T23:59:00-7
+  // dow is Monday to Sunday 1 -to 7
 
-  int year = date.substring(0, 4).toInt();
+  int year  = date.substring(0, 4).toInt();
   int month = date.substring(5, 7).toInt();
-  int day = date.substring(8, 10).toInt();
-  int hour = date.substring(11, 13).toInt();
-  int min = date.substring(14, 16).toInt();
-  int sec = date.substring(17, 19).toInt();
-  int dow = date.substring(20, 21).toInt();
+  int day   = date.substring(8, 10).toInt();
+  int hour  = date.substring(11, 13).toInt();
+  int min   = date.substring(14, 16).toInt();
+  int sec   = date.substring(17, 19).toInt();
+  int dow   = date.substring(20, 21).toInt();
 #ifdef DEBUG
   Serial.println(date);
   Serial.print(day, DEC); Serial.print("/"); Serial.print(month, DEC); Serial.print("/"); Serial.print(year, DEC);
@@ -415,9 +464,9 @@ String setTime(String uri) {
   rtc.writeProtect(false);
 
   // Set the time in the DS1302
-  rtc.setDOW(dow);        // Set Day-of-Week Monday will be a one
-  rtc.setTime(hour, min, sec);     // Set the time (24hr format)
-  rtc.setDate(day, month, year);   // Set the date
+  rtc.setDOW(dow);                  // Set Day-of-Week Monday will be a one
+  rtc.setTime(hour, min, sec);      // Set the time (24hr format)
+  rtc.setDate(day, month, year);    // Set the date
 
   rtc.writeProtect(true);
 

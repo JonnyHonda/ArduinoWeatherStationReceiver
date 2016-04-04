@@ -59,7 +59,7 @@
 			"file": "src/main.cpp",
 			"settings":
 			{
-				"buffer_size": 11829,
+				"buffer_size": 13805,
 				"line_ending": "Unix"
 			}
 		},
@@ -67,7 +67,7 @@
 			"file": "src/configuration.h",
 			"settings":
 			{
-				"buffer_size": 646,
+				"buffer_size": 648,
 				"line_ending": "Unix"
 			}
 		},
@@ -83,7 +83,7 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 392.0,
+		"height": 87.0,
 		"selected_items":
 		[
 			[
@@ -120,6 +120,7 @@
 	},
 	"file_history":
 	[
+		"/Users/johnburrin/Dropbox/Projects/ArduinoWeatherStationReceiver/src/time.js",
 		"/Users/johnburrin/Dropbox/Projects/ArduinoWeatherStationReceiver/.gitignore",
 		"/Users/johnburrin/Dropbox/Projects/ArduinoWeatherStationReceiver/lib/EpochTime/EpochTime.cpp",
 		"/Users/johnburrin/Dropbox/Projects/ArduinoWeatherStationReceiver/lib/EpochTime/EpochTime.h",
@@ -194,15 +195,15 @@
 					"file": "src/main.cpp",
 					"settings":
 					{
-						"buffer_size": 11829,
+						"buffer_size": 13805,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								152,
-								152
+								12838,
+								12838
 							]
 						],
 						"settings":
@@ -212,7 +213,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1799.0,
+						"translation.y": 5661.0,
 						"zoom_level": 1.0
 					},
 					"type": "text"
@@ -222,7 +223,7 @@
 					"file": "src/configuration.h",
 					"settings":
 					{
-						"buffer_size": 646,
+						"buffer_size": 648,
 						"regions":
 						{
 						},
